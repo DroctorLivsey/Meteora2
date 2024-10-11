@@ -6,6 +6,41 @@ import wallet_settings as psw   # файл с паролем, сид фразо�
 DEFAULT_DELAY = 300
 page_url = 'https://app.meteora.ag/'
 jup_swap_url = 'https://jup.ag/'
+token_address = {'USDT' : 'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB',
+                 'SOL' : 'So11111111111111111111111111111111111111112',
+                 'JLP' : '27G8MtK7VtTcCHkpASjSDdkWWYfoqT6ggEuKidVJidD4'}
+
+
+
+async def swap(coin1, coin2, page: Page):
+    global ballance_coin1
+    global ballance_coin2
+    coin1 = coin1.upper()
+    coin2 = coin2.upper()
+    token_1 = page.locator('//*[@id="__next"]/div[2]/div[3]/div[2]/div[2]/div[2]/div[2]/form/div[1]/div['
+                           '1]/div[2]/div/button/div[2]')  # первое поле для токена
+    await token_1.click()
+    await page.locator('//*[@id="__next"]/div[3]/div[1]/div/div/div[1]/input').fill(f'{token_address[coin1]}')  # первое поле для токена вводится адрес usdt
+    await page.locator(
+        '//*[@id="__next"]/div[3]/div[1]/div/div/div[4]/div/div/div/li/div[2]/div[2]/div[1]').click()  # клик по usdt
+    token_2 = page.locator('//*[@id="__next"]/div[2]/div[3]/div[2]/div[2]/div[2]/div[2]/form/div[1]/div['
+                           '3]/div[2]/div/button/div[2]')  # второе поле для токена
+    await token_2.click()
+    await page.locator('//*[@id="__next"]/div[3]/div[1]/div/div/div[1]/input').fill(f'{token_address[coin2]}')  # во второе поле для токена вводится адрес sol
+    await page.locator(
+        '//*[@id="__next"]/div[3]/div[1]/div/div/div[4]/div/div/div/li/div[2]/div[2]/div[1]').click()  # клик по sol
+
+    ballance_coin2_1= await page.locator('//*[@id="__next"]/div[2]/div[3]/div[2]/div[2]/div[2]/div[2]/form/div['
+                                        '1]/div[3]/div[1]/div/div[2]/span[1]').inner_text()  # Парсим баланс sol
+    ballance_coin2 = (float(ballance_coin2_1.replace(',', '.')))
+
+    ballance_coin1_1 = await page.locator(
+        '//*[@id="__next"]/div[2]/div[3]/div[2]/div[2]/div[2]/div[2]/form/div[1]/div[1]/div[1]/div/div['
+        '1]/div[2]/span[1]').inner_text()  # Парсим баланс usdt
+    ballance_coin1 = (float(ballance_coin1_1.replace(',', '.')))
+    print(f'Баланс токена {coin1} = {ballance_coin1}')
+    print(f'Баланс токена {coin2} = {ballance_coin2}')
+
 
 async def wallet_connect(page: Page):
     pages = page.context.pages
@@ -25,6 +60,7 @@ async def wallet_connect(page: Page):
     else:
         print("Не удалось найти всплывающее окно solflare.")
 
+
 async def tranzaction(page: Page):
     pages = page.context.pages
     solflare_page = None
@@ -41,11 +77,13 @@ async def tranzaction(page: Page):
     else:
         print("Не удалось найти всплывающее окно solflare.")
 
+
 async def main():
     async with async_playwright() as p:
         context = await p.chromium.launch_persistent_context(
             '',
             headless=False,
+            slow_mo=1000,
             args=[
                 f'--disable-extensions-except={psw.SOLFLARE_EXTENSION_PATH}',
                 f'--load-extension={psw.SOLFLARE_EXTENSION_PATH}',
@@ -102,30 +140,11 @@ async def main():
             await wallet_connect(page)
             await asyncio.sleep(5)
             # Проверяем баланс соланы
-            token_1 = page.locator('//*[@id="__next"]/div[2]/div[3]/div[2]/div[2]/div[2]/div[2]/form/div[1]/div['
-                                   '1]/div[2]/div/button/div[2]')  # первое поле для токена
-            await token_1.click()
-            await page.locator('//*[@id="__next"]/div[3]/div[1]/div/div/div[1]/input').fill('Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB')    # первое поле для токена вводится адрес usdt
-            await page.locator('//*[@id="__next"]/div[3]/div[1]/div/div/div[4]/div/div/div/li/div[2]/div[2]/div[1]').click()                   # клик по usdt
-            token_2 = page.locator('//*[@id="__next"]/div[2]/div[3]/div[2]/div[2]/div[2]/div[2]/form/div[1]/div['
-                                   '3]/div[2]/div/button/div[2]')  # второе поле для токена
-            await token_2.click()
-            await page.locator('//*[@id="__next"]/div[3]/div[1]/div/div/div[1]/input').fill('So11111111111111111111111111111111111111112')     # во второе поле для токена вводится адрес sol
-            await page.locator('//*[@id="__next"]/div[3]/div[1]/div/div/div[4]/div/div/div/li/div[2]/div[2]/div[1]').click()                   # клик по sol
 
-            ballance_sol_1 =await page.locator('//*[@id="__next"]/div[2]/div[3]/div[2]/div[2]/div[2]/div[2]/form/div['
-                                               '1]/div[3]/div[1]/div/div[2]/span[1]').inner_text()  # Парсим баланс sol
-            ballance_sol = (float(ballance_sol_1.replace(',','.')))
+            await swap('usdt', 'sol', page)
 
-            ballance_usdt_1 = await page.locator(
-                '//*[@id="__next"]/div[2]/div[3]/div[2]/div[2]/div[2]/div[2]/form/div[1]/div[1]/div[1]/div/div['
-                '1]/div[2]/span[1]').inner_text()                    # Парсим баланс usdt
-            ballance_usdt = (float(ballance_usdt_1.replace(',', '.')))
-
-            print(ballance_sol)
-            print(ballance_usdt)
             # Если соланы меньше 0.09 и usdt > 2, то докупаем sol на 2$
-            if ballance_sol < 0.09 and ballance_usdt > 2:
+            if ballance_coin2 < 0.09 and ballance_coin1 > 2:
                 await page.locator('//*[@id="__next"]/div[2]/div[3]/div[2]/div[2]/div[2]/div[2]/form/div[1]/div['
                                    '1]/div[2]/span/div/input').fill('2')
                 but_swp = page.locator('//*[@id="__next"]/div[2]/div[3]/div[2]/div[2]/div[2]/div[2]/form/div[4]/button')
@@ -138,30 +157,10 @@ async def main():
 
             # Проверяем баланс jlp
 
-            token_1 = page.locator(
-                '//*[@id="__next"]/div[2]/div[3]/div[2]/div[2]/div[2]/div[2]/form/div[1]/div[1]/div[2]/div/button/div[2]')
-            await token_1.click()
-            await page.locator('//*[@id="__next"]/div[3]/div[1]/div/div/div[1]/input').fill(
-                'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB')
-            await page.locator(
-                '//*[@id="__next"]/div[3]/div[1]/div/div/div[4]/div/div/div/li/div[2]/div[2]/div[1]').click()
-            token_2 = page.locator(
-                '//*[@id="__next"]/div[2]/div[3]/div[2]/div[2]/div[2]/div[2]/form/div[1]/div[3]/div[2]/div/button/div[2]')
-            await token_2.click()
-            await page.locator('//*[@id="__next"]/div[3]/div[1]/div/div/div[1]/input').fill(
-                '27G8MtK7VtTcCHkpASjSDdkWWYfoqT6ggEuKidVJidD4')
-            await page.locator(
-                '//*[@id="__next"]/div[3]/div[1]/div/div/div[4]/div/div/div/li/div[2]/div[2]/div[1]').click()
-
-            ballance_jlp_1 = page.locator(
-                '//*[@id="__next"]/div[2]/div[3]/div[2]/div[2]/div[2]/div[2]/form/div[1]/div[3]/div[1]/div/div[2]/span[1]')
-            ballance_jlp_2 = await ballance_jlp_1.inner_text()
-            ballance_jlp = (float(ballance_jlp_2.replace(',', '.')))
-            print(ballance_jlp)
+            await swap('usdt', 'jlp', page)
 
             # Если jlp меньше 5 и usdt > 2, то докупаем jlp на 2$
-
-            if ballance_jlp < 5 and ballance_usdt > 2:
+            if ballance_coin2 < 5 and ballance_coin1 > 2:
                 await page.locator(
                     '//*[@id="__next"]/div[2]/div[3]/div[2]/div[2]/div[2]/div[2]/form/div[1]/div[1]/div['
                     '2]/span/div/input').fill('2')
@@ -172,7 +171,6 @@ async def main():
 
                 await tranzaction(page)
                 await asyncio.sleep(5)
-
 
         await ballance_wallet(page=jup_page)
 
@@ -193,7 +191,6 @@ async def main():
             await asyncio.sleep(3)
             await wallet_connect(page)
             await asyncio.sleep(3)
-
 
         await wallet(page3)
 
@@ -244,13 +241,13 @@ async def main():
         close_pos = page3.get_by_text('USDT per JLP')
         await expect(close_pos.first).to_be_visible(timeout=20000)
         await close_pos.first.click()  # Раскрываем позицию
-        await asyncio.sleep(10)
-        widrought_btn = page3.locator('//*[@id="radix-:r0:"]/div[2]/div[1]/div/div[2]')   # Раздел вывода ликвидности
+        await asyncio.sleep(15)
+        widrought_btn = page3.locator('//div[@class="cursor-pointer font-semibold text-base flex-shrink-0 rounded-lg px-5 py-2 text-white"]')   # Раздел вывода ликвидности
         await expect(widrought_btn).to_be_attached(timeout=20000)
         await widrought_btn.hover()
         await widrought_btn.click()
         await asyncio.sleep(3)
-        await page3.locator('//*[@id="radix-:r0:"]/div[2]/div[2]/form/div[3]/div/button').click()    # Кнопка закрыть позицию
+        await page3.locator('//button[@class ="bg-white text-black rounded-lg p-3 border border-black/50 disabled:opacity-50 disabled:cursor-not-allowed w-full"]').click()    # Кнопка закрыть позицию
         await asyncio.sleep(2)
 
         await tranzaction(page3)
