@@ -1,5 +1,6 @@
 import asyncio
 from playwright.async_api import async_playwright, expect, Page
+from playwright.sync_api import BrowserContext, Browser
 import wallet_settings as psw   # файл с паролем, сид фразой и путь до манифеста
 
 
@@ -9,12 +10,13 @@ jup_swap_url = 'https://jup.ag/'
 token_address = {'USDT' : 'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB',
                  'SOL' : 'So11111111111111111111111111111111111111112',
                  'JLP' : '27G8MtK7VtTcCHkpASjSDdkWWYfoqT6ggEuKidVJidD4'}
+connect_button = '//html/body/div[2]/div[2]/div/div[3]/div/button[2]'
+tranzaction_button = '//html/body/div[2]/div[2]/div/div[2]/div/div[2]/div[2]/div[2]/button[2]'
 
 
 
-async def swap(coin1, coin2, page: Page):
-    global ballance_coin1
-    global ballance_coin2
+
+async def swap(coin1: str, coin2: str, page: Page):
     coin1 = coin1.upper()
     coin2 = coin2.upper()
     token_1 = page.locator('//*[@id="__next"]/div[2]/div[3]/div[2]/div[2]/div[2]/div[2]/form/div[1]/div['
@@ -29,53 +31,63 @@ async def swap(coin1, coin2, page: Page):
     await page.locator('//*[@id="__next"]/div[3]/div[1]/div/div/div[1]/input').fill(f'{token_address[coin2]}')  # во второе поле для токена вводится адрес sol
     await page.locator(
         '//*[@id="__next"]/div[3]/div[1]/div/div/div[4]/div/div/div/li/div[2]/div[2]/div[1]').click()  # клик по sol
-
-    ballance_coin2_1= await page.locator('//*[@id="__next"]/div[2]/div[3]/div[2]/div[2]/div[2]/div[2]/form/div['
-                                        '1]/div[3]/div[1]/div/div[2]/span[1]').inner_text()  # Парсим баланс sol
-    ballance_coin2 = (float(ballance_coin2_1.replace(',', '.')))
-
     ballance_coin1_1 = await page.locator(
         '//*[@id="__next"]/div[2]/div[3]/div[2]/div[2]/div[2]/div[2]/form/div[1]/div[1]/div[1]/div/div['
         '1]/div[2]/span[1]').inner_text()  # Парсим баланс usdt
     ballance_coin1 = (float(ballance_coin1_1.replace(',', '.')))
+    ballance_coin2_1= await page.locator('//*[@id="__next"]/div[2]/div[3]/div[2]/div[2]/div[2]/div[2]/form/div['
+                                        '1]/div[3]/div[1]/div/div[2]/span[1]').inner_text()  # Парсим баланс sol
+    ballance_coin2 = (float(ballance_coin2_1.replace(',', '.')))
     print(f'Баланс токена {coin1} = {ballance_coin1}')
     print(f'Баланс токена {coin2} = {ballance_coin2}')
+    return ballance_coin1, ballance_coin2
 
 
-async def wallet_connect(page: Page):
-    pages = page.context.pages
+async def find_page(context: BrowserContext) -> Page:
+    pages = context.pages
     solflare_page = None
     for p in pages:
         if 'confirm_popup.html' in p.url:
             solflare_page = p
             break
-    if solflare_page:
+    return solflare_page
+
+
+# async def wallet_connect(context: BrowserContext):
+#     solflare_page = await find_page(context)
+#     if solflare_page is None:
+#         print("Не удалось найти всплывающее окно solflare.")
+#     else:
+#         await solflare_page.bring_to_front()
+#         await asyncio.sleep(4)
+#         yes_button = solflare_page.locator('//html/body/div[2]/div[2]/div/div[3]/div/button[2]')
+#         await expect(yes_button).to_be_visible(timeout=20000)
+#         await yes_button.click(click_count=2)
+#         await asyncio.sleep(2)
+
+
+async def wallet_functions(context: BrowserContext, button: str):
+    solflare_page = await find_page(context)
+    if solflare_page is None:
+        print("Не удалось найти всплывающее окно solflare.")
+    else:
         await solflare_page.bring_to_front()
-        await asyncio.sleep(4)
-        yes_button = solflare_page.locator('//html/body/div[2]/div[2]/div/div[3]/div/button[2]')
+        yes_button = solflare_page.locator(button)  # Кнопка подтверждения
         await expect(yes_button).to_be_visible(timeout=20000)
         await yes_button.click(click_count=2)
         await asyncio.sleep(2)
-        # await solflare_page.close()
-    else:
-        print("Не удалось найти всплывающее окно solflare.")
 
-
-async def tranzaction(page: Page):
-    pages = page.context.pages
-    solflare_page = None
-    for p in pages:
-        if 'confirm_popup.html' in p.url:
-            solflare_page = p
-            break
-    if solflare_page:
-        await solflare_page.bring_to_front()
-        yes_button = solflare_page.locator(
-            '//html/body/div[2]/div[2]/div/div[2]/div/div[2]/div[2]/div[2]/button[2]')  # Кнопка подтверждения транзы
-        await expect(yes_button).to_be_visible(timeout=20000)
-        await yes_button.click(click_count=2)
-    else:
-        print("Не удалось найти всплывающее окно solflare.")
+# async def tranzaction(context: BrowserContext):
+#     solflare_page = await find_page(context)
+#     if solflare_page is None:
+#         print("Не удалось найти всплывающее окно solflare.")
+#     else:
+#         await solflare_page.bring_to_front()
+#         yes_button = solflare_page.locator(
+#             '//html/body/div[2]/div[2]/div/div[2]/div/div[2]/div[2]/div[2]/button[2]')  # Кнопка подтверждения транзы
+#         await expect(yes_button).to_be_visible(timeout=20000)
+#         await yes_button.click(click_count=2)
+#         await asyncio.sleep(2)
 
 
 async def main():
@@ -137,12 +149,11 @@ async def main():
             await butnconect.click()
             await asyncio.sleep(4)
 
-            await wallet_connect(page)
+            await wallet_functions(context=context, button=connect_button)
             await asyncio.sleep(5)
             # Проверяем баланс соланы
 
-            await swap('usdt', 'sol', page)
-
+            ballance_coin1, ballance_coin2 = await swap(coin1='usdt', coin2='sol', page=page)
             # Если соланы меньше 0.09 и usdt > 2, то докупаем sol на 2$
             if ballance_coin2 < 0.09 and ballance_coin1 > 2:
                 await page.locator('//*[@id="__next"]/div[2]/div[3]/div[2]/div[2]/div[2]/div[2]/form/div[1]/div['
@@ -152,7 +163,7 @@ async def main():
                 await but_swp.click()
                 await asyncio.sleep(3)
 
-                await tranzaction(page)
+                await wallet_functions(context=context, button=tranzaction_button)
                 await asyncio.sleep(5)
 
             # Проверяем баланс jlp
@@ -169,7 +180,7 @@ async def main():
                 await butn_swp.click()
                 await asyncio.sleep(3)
 
-                await tranzaction(page)
+                await wallet_functions(context=context, button=tranzaction_button)
                 await asyncio.sleep(5)
 
         await ballance_wallet(page=jup_page)
@@ -189,7 +200,7 @@ async def main():
 
             # Ждем всплывающее окно Solflare и подтверждаем подключение
             await asyncio.sleep(3)
-            await wallet_connect(page)
+            await wallet_functions(context=context, button=connect_button)
             await asyncio.sleep(3)
 
         await wallet(page3)
@@ -234,7 +245,7 @@ async def main():
         await page3.locator('//*[@id="__next"]/div[1]/div[5]/div/div[2]/div/div[2]/div[2]/div[2]/form/button').click()  # Клик на кнопку создать ликвидность
         await asyncio.sleep(2)
 
-        await tranzaction(page3)
+        await wallet_functions(context=context, button=tranzaction_button)
         await asyncio.sleep(30)
 
         # Закрываем позицию
@@ -242,15 +253,14 @@ async def main():
         await expect(close_pos.first).to_be_visible(timeout=20000)
         await close_pos.first.click()  # Раскрываем позицию
         await asyncio.sleep(15)
-        widrought_btn = page3.locator('//div[@class="cursor-pointer font-semibold text-base flex-shrink-0 rounded-lg px-5 py-2 text-white"]')   # Раздел вывода ликвидности
-        await expect(widrought_btn).to_be_attached(timeout=20000)
-        await widrought_btn.hover()
-        await widrought_btn.click()
+        widrow_btn = page3.locator('//div[@class="cursor-pointer font-semibold text-base flex-shrink-0 rounded-lg px-5 py-2 text-white"]')   # Раздел вывода ликвидности
+        await expect(widrow_btn).to_be_attached(timeout=20000)
+        await widrow_btn.click()
         await asyncio.sleep(3)
         await page3.locator('//button[@class ="bg-white text-black rounded-lg p-3 border border-black/50 disabled:opacity-50 disabled:cursor-not-allowed w-full"]').click()    # Кнопка закрыть позицию
         await asyncio.sleep(2)
 
-        await tranzaction(page3)
+        await wallet_functions(context=context, button=tranzaction_button)
         await asyncio.sleep(10)
 
         print('ОК!!!')
@@ -258,3 +268,8 @@ async def main():
         await context.close()
 if __name__ == '__main__':
     asyncio.run(main())
+
+
+
+    # Разобраться с подключением кошелька (2 функции в одну)
+    # Переименовать функцию swap, balance coin1 и 2
