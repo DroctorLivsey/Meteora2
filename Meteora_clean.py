@@ -98,13 +98,13 @@ async def ballance_token(stable_coin: str, need_coin: str, page: Page):
     ballance_coin1_1 = await page.locator(
         '//*[@id="__next"]/div[2]/div[3]/div[2]/div[2]/div[2]/div[2]/form/div[1]/div[1]/div[1]/div/div['
         '1]/div[2]/span[1]').inner_text()  # Парсим баланс usdt
-    ballance_coin1 = (float(ballance_coin1_1.replace(',', '.')))
+    ballance_stable_token = (float(ballance_coin1_1.replace(',', '.')))
     ballance_coin2_1= await page.locator('//*[@id="__next"]/div[2]/div[3]/div[2]/div[2]/div[2]/div[2]/form/div['
                                         '1]/div[3]/div[1]/div/div[2]/span[1]').inner_text()  # Парсим баланс sol
-    ballance_coin2 = (float(ballance_coin2_1.replace(',', '.')))
-    print(f'Баланс токена {coin1} = {ballance_coin1}')
-    print(f'Баланс токена {coin2} = {ballance_coin2}')
-    return ballance_coin1, ballance_coin2
+    ballance_need_token = (float(ballance_coin2_1.replace(',', '.')))
+    print(f'Баланс токена {coin1} = {ballance_stable_token}')
+    print(f'Баланс токена {coin2} = {ballance_need_token}')
+    return ballance_stable_token, ballance_need_token
 
 # Функция поиска всплывающего окна
 async def find_page(context: BrowserContext) -> Page:
@@ -184,19 +184,19 @@ async def main():
         await wallet_functions(context=context, button=connect_button)
         await asyncio.sleep(5)
         # Проверяем баланс соланы
-        ballance_coin1, ballance_coin2 = await ballance_token(stable_coin='usdt', need_coin='sol', page=jup_page)
+        ballance_stable_token, ballance_need_token = await ballance_token(stable_coin='usdt', need_coin='sol', page=jup_page)
 
         # Если соланы меньше 0.09 и usdt > 2, то докупаем sol на 2$
-        if ballance_coin2 < 0.09 and ballance_coin1 > 2:
+        if ballance_need_token < 0.09 and ballance_stable_token > 2:
             await swap(page=jup_page)
             await wallet_functions(context=context, button=tranzaction_button)
             await asyncio.sleep(5)
 
             # Проверяем баланс jlp
-        ballance_coin1, ballance_coin2 = await ballance_token(stable_coin='usdt', need_coin='jlp', page=jup_page)
+        ballance_stable_token, ballance_need_token = await ballance_token(stable_coin='usdt', need_coin='jlp', page=jup_page)
 
         # Если jlp меньше 5 и usdt > 2, то докупаем jlp на 2$
-        if ballance_coin2 < 5 and ballance_coin1 > 2:
+        if ballance_need_token < 5 and ballance_stable_token > 2:
             await swap(page=jup_page)
             await wallet_functions(context=context, button=tranzaction_button)
             await asyncio.sleep(5)
