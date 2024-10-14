@@ -1,8 +1,8 @@
 from lib2to3.fixes.fix_input import context
 import asyncio
 from playwright.async_api import  expect, Page
-from meteora_settings import (token_address, transaction_button, meteora_btn_con, page_url, jup_swap_url, jup_btn_con,
-                              connect_button, DEFAULT_DELAY)                                      # файл с переменными
+from constants import (token_address, transaction_button, meteora_btn_con, page_url, jup_swap_url, jup_btn_con,
+                       connect_button, DEFAULT_DELAY)                                      # файл с переменными
 from playwright.sync_api import BrowserContext
 
 # Функция свапа
