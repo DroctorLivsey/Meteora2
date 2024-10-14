@@ -4,8 +4,8 @@ from wallet_settings import seed, SOLFLARE_EXTENSION_PATH, MM_PASSWORD          
 from playwright.sync_api import BrowserContext
 from functions import (swap, open_position, close_position, connect_wallet, get_balance_token, find_page,
                        wallet_functions, authorization, sell_position, range_price)               # файл с функциями
-from meteora_settings import (token_address, transaction_button, meteora_btn_con, page_url, jup_swap_url, jup_btn_con,
-                              connect_button, DEFAULT_DELAY)                                      # файл с переменными
+from constants import (token_address, transaction_button, meteora_btn_con, page_url, jup_swap_url, jup_btn_con,
+                       connect_button, DEFAULT_DELAY)                                      # файл с переменными
 
 
 async def main():
