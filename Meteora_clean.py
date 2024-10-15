@@ -1,11 +1,11 @@
 import asyncio
 from playwright.async_api import async_playwright, expect, Page
-from wallet_settings import seed, SOLFLARE_EXTENSION_PATH, MM_PASSWORD             # файл с паролем, сид фразой и путь до манифеста
+from wallet_settings import seed, SOLFLARE_EXTENSION_PATH, MM_PASSWORD                            # файл с паролем, сид фразой и путь до манифеста
 from playwright.sync_api import BrowserContext
 from functions import (swap, open_position, close_position, connect_wallet, get_balance_token, find_page,
                        wallet_functions, authorization, sell_position, range_price)               # файл с функциями
 from constants import (token_address, transaction_button, meteora_btn_con, page_url, jup_swap_url, jup_btn_con,
-                       connect_button, DEFAULT_DELAY)                                      # файл с переменными
+                       connect_button, DEFAULT_DELAY)                                             # файл с переменными
 
 
 async def main():
@@ -57,7 +57,11 @@ async def main():
 
             # Если jlp меньше 5 и usdt > 2, то докупаем jlp на 2$
             if balance_to_token < 5 and balance_from_token > 2:
-                quantity_swap = str(balance_from_token * 0.8)
+                print('Меняем USDT=', balance_from_token-3)
+                quantity_swap = (balance_from_token-3)
+                quantity_swap = round(quantity_swap, 2)
+                quantity_swap = str(quantity_swap)
+                quantity_swap = quantity_swap.replace('.',',')
                 await swap(page=jup_page, quantity=quantity_swap)
                 await wallet_functions(context=context, button=transaction_button)
 
@@ -101,16 +105,17 @@ async def main():
             await wallet_functions(context=context, button=transaction_button)
             head_range_price, low_range_price = await range_price(page=page)
             print('Верхняя границе рейнжа=', head_range_price)
-            now_price = 0
+            print('Нижняя границе рейнжа=', low_range_price)
             sell_price = low_range_price + (head_range_price - low_range_price) * 0.95
-
-            await sell_position(page=page, sell_price=sell_price, now_price=now_price)
+            print('Цена продажи=', sell_price)
+            await sell_position(page=page, sell_price=sell_price)
             # Закрываем позицию
             await close_position(page=page)
             await wallet_functions(context=context, button=transaction_button)
             print('ОК!!!')
             await asyncio.sleep(30)
             await context.close()
+            break
 
 
 if __name__ == '__main__':
