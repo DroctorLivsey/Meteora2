@@ -32,8 +32,9 @@ async def open_position(page: Page):
     for i in range(6):
         await min_price.press('Backspace')
     await min_price.type('0', delay=DEFAULT_DELAY)
-    await page.locator(
-        '//*[@id="__next"]/div[1]/div[5]/div/div[2]/div/div[2]/div[2]/div[2]/form/div[3]/div[2]/div/div[4]/div[1]').click()  # Проверка сколько транзакций
+    await page.locator('//*[@id="__next"]/div[1]/div[5]/div/div[2]/div/div[2]/div[2]/div[2]/form/div[3]/div['
+                       '2]/div/div[4]/div[1]').click()  # Проверка сколько транзакций
+    await asyncio.sleep(4)
     await page.locator(
         '//*[@id="__next"]/div[1]/div[5]/div/div[2]/div/div[2]/div[2]/div[2]/form/button').click()  # Клик на кнопку создать ликвидность
 
@@ -41,11 +42,11 @@ async def open_position(page: Page):
 # Закрытие позиции
 async def close_position(page: Page):
     close_pos = page.get_by_text('USDT per JLP')
-    await expect(close_pos.first).to_be_visible(timeout=20000)
+    await expect(close_pos.first).to_be_visible(timeout=60000)
     await close_pos.first.click()  # Раскрываем позицию
     withdraw_btn = page.locator(
         '//div[@class="cursor-pointer font-semibold text-base flex-shrink-0 rounded-lg px-5 py-2 text-white"]')  # Раздел вывода ликвидности
-    await expect(withdraw_btn).to_be_attached(timeout=20000)
+    await expect(withdraw_btn).to_be_attached(timeout=60000)
     await withdraw_btn.click()
     await page.locator(
         '//button[@class="bg-white text-black rounded-lg p-3 border border-black/50 disabled:opacity-50 disabled:cursor-not-allowed w-full"]').click()  # Кнопка закрыть позицию
@@ -98,15 +99,26 @@ async def find_page(context: BrowserContext, link: str) -> Page:
 
 # Функция подтверждения
 async def wallet_functions(context: BrowserContext, button: str):
-    solflare_page = await find_page(context=context, link='confirm_popup.html')
-    if solflare_page is None:
-        print("Не удалось найти всплывающее окно solflare.")
-    else:
-        await solflare_page.bring_to_front()
-        yes_button = solflare_page.locator(button)  # Кнопка подтверждения
-        await expect(yes_button).to_be_visible(timeout=20000)
-        await yes_button.click(click_count=2)
-        await asyncio.sleep(4)
+    while True:
+        await asyncio.sleep(2)
+        solflare_page = await find_page(context=context, link='confirm_popup.html')
+        if solflare_page is None:
+            print("Не удалось найти всплывающее окно solflare.")
+        else:
+            try:
+                page = solflare_page
+                check_tranz = page.locator(
+                    '//html/body/div[2]/div[2]/div/div[2]/div/div[2]/div[2]/label/label/div')
+                await expect(check_tranz).to_be_attached()
+                await check_tranz.click()
+            except:
+                print('Кошелёк стабильно работает')
+            await solflare_page.bring_to_front()
+            yes_button = solflare_page.locator(button)  # Кнопка подтверждения
+            await expect(yes_button).to_be_visible(timeout=60000)
+            await yes_button.click(click_count=2)
+            await asyncio.sleep(20)
+            break
 
 
 # Функция процесса авторизации в кошельке
@@ -137,8 +149,9 @@ async def authorization (context: BrowserContext, seed: list, password: str):
         await wallet_page.locator('//*[@id="root"]/div/div[2]/div/div[2]/button[2]/span').click()  # Вход
 
 
-async def sell_position(page: Page, sell_price: float, now_price: float):
-    while now_price != sell_price:
+async def sell_position(page: Page, sell_price: float):
+    current_price=0
+    while float(current_price) < float(sell_price):
         await asyncio.sleep(2)
         try:
             connect_wallet_button = page.locator('//*[@id="__next"]/div[1]/div[2]/div/div/div[3]/div[2]/button/div')
@@ -152,15 +165,16 @@ async def sell_position(page: Page, sell_price: float, now_price: float):
             print('Кошелёк подключён')
 
         finally:
-            now_price = await page.locator(
-            '//*[@id="__next"]/div[1]/div[5]/div/div[2]/div/div[2]/div[1]/div/div[1]/div['
-            '1]/div/div/div/div/div/div[2]/button/div[1]/span').inner_text()
-            print('Текущая цена jlp=', now_price)
+            current_price = await page.locator('//*[@id="__next"]/div[1]/div[5]/div/div[2]/div/div[2]/div[1]/div/div[1]/div['
+                '1]/div/div/div/div/div/div[2]/button/div[1]/span').inner_text()
+            print('Текущая цена jlp=', float(current_price))
+            need_price = sell_price - float(current_price)
+            print('Текущая цена меньше нужной на ', need_price)
 
 
 async def range_price(page: Page):
     raw_range_now = page.locator('//div[@class="flex flex-col space-y-1 flex-1 text-lg"]/div/div/span')
-    await expect(raw_range_now).to_be_visible(timeout=30000)
+    await expect(raw_range_now).to_be_visible(timeout=60000)
     range_now = await raw_range_now.inner_text()
     print(range_now)
     head_range = float(range_now.split(' - ')[1])
