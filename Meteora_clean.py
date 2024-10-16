@@ -104,18 +104,17 @@ async def main():
             await open_position(page=page)
             await wallet_functions(context=context, button=transaction_button)
             head_range_price, low_range_price = await range_price(page=page)
-            print('Верхняя границе рейнжа=', head_range_price)
-            print('Нижняя границе рейнжа=', low_range_price)
+            print('Верхняя границе рейнджа=', head_range_price)
+            print('Нижняя границе рейнджа=', low_range_price)
             sell_price = low_range_price + (head_range_price - low_range_price) * 0.95
             print('Цена продажи=', sell_price)
             await sell_position(page=page, sell_price=sell_price)
             # Закрываем позицию
             await close_position(page=page)
             await wallet_functions(context=context, button=transaction_button)
-            print('ОК!!!')
+            print('Позиция закрыта в связи с достижением указанной цены')
             await asyncio.sleep(30)
             await context.close()
-            break
 
 
 if __name__ == '__main__':
