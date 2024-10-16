@@ -53,12 +53,19 @@ async def close_position(page: Page):
 
 # Функция кнопки подключить кошелёк и выбора кошелька
 async def connect_wallet(url: str|None, button: str, page: Page):
-    await page.bring_to_front()
-    await page.goto(url)
-    wallet_connect = page.locator(button)  # Подключить кошелёк
-    await wallet_connect.click()
-    button_connect = page.get_by_text('Solflare')
-    await button_connect.click()
+    while True:
+        try:
+            await page.bring_to_front()
+            await page.goto(url)
+            wallet_connect = page.locator(button)
+            await asyncio.sleep(5)# Подключить кошелёк
+            await wallet_connect.click()
+            button_connect = page.get_by_text('Solflare')
+            await button_connect.first.click()
+        except:
+            print('Что-то пошло не так, кошелёк не найден')
+            continue
+        break
 
 # Функция парсинга баланса
 async def get_balance_token(stable_coin: str, need_coin: str, page: Page):
