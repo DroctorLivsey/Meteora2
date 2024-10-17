@@ -32,12 +32,23 @@ async def open_position(page: Page):
     for i in range(6):
         await min_price.press('Backspace')
     await min_price.type('0', delay=DEFAULT_DELAY)
-    await page.locator('//*[@id="__next"]/div[1]/div[5]/div/div[2]/div/div[2]/div[2]/div[2]/form/div[3]/div['
-                       '2]/div/div[4]/div[1]').click()  # Проверка сколько транзакций
-    await asyncio.sleep(4)
-    await page.locator(
-        '//*[@id="__next"]/div[1]/div[5]/div/div[2]/div/div[2]/div[2]/div[2]/form/button').click()  # Клик на кнопку создать ликвидность
-
+    while True:
+        await page.locator('//*[@id="__next"]/div[1]/div[5]/div/div[2]/div/div[2]/div[2]/div[2]/form/div[3]/div['
+                           '2]/div/div[4]/div[1]').click()  # Проверка сколько транзакций
+        await asyncio.sleep(7)
+        com_sol_text = await page.locator(
+            '//div[@class="flex flex-col lg:flex-row lg:items-center lg:space-x-1 text-xs"]/div[2]').inner_text()
+        com_sol = com_sol_text.split(' ')[0]
+        print('Текущая комиссия=', float(com_sol))
+        if float(com_sol) > 0.08:
+            await page.locator('//*[@id="__next"]/div[1]/div[5]/div/div[2]/div/div[2]/div[2]/div[2]/form/div[3]/div['
+                               '2]/div/div[4]/div[1]').click()  # Проверка сколько транзакций
+            await asyncio.sleep(7)
+            continue
+        else:
+            await page.locator(
+                '//*[@id="__next"]/div[1]/div[5]/div/div[2]/div/div[2]/div[2]/div[2]/form/button').click()  # Клик на кнопку создать ликвидность
+            break
 
 # Закрытие позиции
 async def close_position(page: Page):
@@ -119,12 +130,17 @@ async def wallet_functions(context: BrowserContext, button: str):
                 await expect(check_tranz).to_be_attached()
                 await check_tranz.click()
             except:
-                print('Кошелёк стабильно работает')
-            await solflare_page.bring_to_front()
-            yes_button = solflare_page.locator(button)  # Кнопка подтверждения
-            await expect(yes_button).to_be_visible(timeout=60000)
-            await yes_button.click(click_count=2)
-            await asyncio.sleep(20)
+                while True:
+                    try:
+                        await solflare_page.bring_to_front()
+                        yes_button = solflare_page.locator(button)  # Кнопка подтверждения
+                        await expect(yes_button).to_be_visible(timeout=60000)
+                        await yes_button.click(click_count=2)
+                        await asyncio.sleep(20)
+                        print('Кошелёк стабильно работает')
+                        break
+                    except:
+                        print('Не найдена кнопка подтверждения в кошельке')
             break
 
 
@@ -177,6 +193,14 @@ async def sell_position(page: Page, sell_price: float):
             print('Текущая цена jlp=', float(current_price))
             need_price = sell_price - float(current_price)
             print('Текущая цена меньше нужной на ', need_price)
+
+
+
+
+
+
+
+
 
 
 async def range_price(page: Page):
