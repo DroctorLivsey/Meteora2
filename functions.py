@@ -19,20 +19,21 @@ async def open_position(page: Page):
         '//*[@id="__next"]/div[1]/div[5]/div/div[2]/div/div[2]/div[2]/div[1]/div[1]/div[2]/span').click()  # Кнопка создать позицию
     await page.locator('//*[@id="__next"]/div[1]/div[5]/div/div[2]/div/div[2]/div[2]/div[2]/form/div['
                         '1]/div[1]/div/div/button').click()                                                # Отключить auto_fill
-    await page.locator('//*[@id="__next"]/div[1]/div[5]/div/div[2]/div/div[2]/div[2]/div[2]/form/div['
-                        '1]/div[2]/div[1]/div[2]/div[2]/div[2]').click()  # Клик на ввод max jlp
-    max_price = page.locator('//*[@id="__next"]/div[1]/div[5]/div/div[2]/div/div[2]/div[2]/div[2]/form/div['
-                              '3]/div[2]/div/div[3]/div[2]/div/input[2]')  # Максимальный процент
-    await max_price.click(click_count=2)
-    await max_price.press('Backspace')
-    await max_price.fill('2.75')
-    min_price = page.locator('//*[@id="__next"]/div[1]/div[5]/div/div[2]/div/div[2]/div[2]/div[2]/form/div['
-                              '3]/div[2]/div/div[3]/div[1]/div/input[2]')  # Минимальный процент
-    await min_price.click()
-    for i in range(6):
-        await min_price.press('Backspace')
-    await min_price.type('0', delay=DEFAULT_DELAY)
     while True:
+        await page.locator('//*[@id="__next"]/div[1]/div[5]/div/div[2]/div/div[2]/div[2]/div[2]/form/div['
+                            '1]/div[2]/div[1]/div[2]/div[2]/div[2]').click()  # Клик на ввод max jlp
+        max_price = page.locator('//*[@id="__next"]/div[1]/div[5]/div/div[2]/div/div[2]/div[2]/div[2]/form/div['
+                                  '3]/div[2]/div/div[3]/div[2]/div/input[2]')  # Максимальный процент
+        await max_price.click()
+        for i in range(6):
+            await max_price.press('Backspace')
+        await max_price.fill('2.75')
+        min_price = page.locator('//*[@id="__next"]/div[1]/div[5]/div/div[2]/div/div[2]/div[2]/div[2]/form/div['
+                                  '3]/div[2]/div/div[3]/div[1]/div/input[2]')  # Минимальный процент
+        await min_price.click()
+        for i in range(6):
+            await min_price.press('Backspace')
+        await min_price.type('0', delay=DEFAULT_DELAY)
         await page.locator('//*[@id="__next"]/div[1]/div[5]/div/div[2]/div/div[2]/div[2]/div[2]/form/div[3]/div['
                            '2]/div/div[4]/div[1]').click()  # Проверка сколько транзакций
         await asyncio.sleep(7)
@@ -172,9 +173,10 @@ async def authorization (context: BrowserContext, seed: list, password: str):
         await wallet_page.locator('//*[@id="root"]/div/div[2]/div/div[2]/button[2]/span').click()  # Вход
 
 
-async def sell_position(page: Page, sell_price: float):
-    current_price=0
-    while float(current_price) < float(sell_price):
+async def sell_position(page: Page, sell_price: float, stop_price: float):
+    current_price= await page.locator('//*[@id="__next"]/div[1]/div[5]/div/div[2]/div/div[2]/div[1]/div/div[1]/div['
+                '1]/div/div/div/div/div/div[2]/button/div[1]/span').inner_text()
+    while float(sell_price) > float(current_price) > float(stop_price):
         await asyncio.sleep(2)
         try:
             connect_wallet_button = page.locator('//*[@id="__next"]/div[1]/div[2]/div/div/div[3]/div[2]/button/div')
@@ -193,14 +195,6 @@ async def sell_position(page: Page, sell_price: float):
             print('Текущая цена jlp=', float(current_price))
             need_price = sell_price - float(current_price)
             print('Текущая цена меньше нужной на ', need_price)
-
-
-
-
-
-
-
-
 
 
 async def range_price(page: Page):
