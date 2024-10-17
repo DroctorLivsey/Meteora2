@@ -9,6 +9,7 @@ from constants import (token_address, transaction_button, meteora_btn_con, page_
 
 
 async def main():
+    round = 1
     while True:
         async with async_playwright() as p:
             context = await p.chromium.launch_persistent_context(
@@ -106,16 +107,19 @@ async def main():
             head_range_price, low_range_price = await range_price(page=page)
             print('Верхняя границе рейнджа=', head_range_price)
             print('Нижняя границе рейнджа=', low_range_price)
-            sell_price = low_range_price + (head_range_price - low_range_price) * 0.95
-            print('Цена продажи=', sell_price)
-            await sell_position(page=page, sell_price=sell_price)
+            sell_price = low_range_price + (head_range_price - low_range_price) * 0.02
+            stop_price = low_range_price - (head_range_price - low_range_price) * 0.02
+            print('Целевая цена продажи=', sell_price)
+            print('Стоп лосс=', stop_price)
+            await sell_position(page=page, sell_price=sell_price, stop_price =stop_price)
             # Закрываем позицию
             await close_position(page=page)
             await wallet_functions(context=context, button=transaction_button)
             print('Позиция закрыта в связи с достижением указанной цены')
             await asyncio.sleep(30)
             await context.close()
-
+            print(f'Раунд {round} завершён')
+            round += 1
 
 if __name__ == '__main__':
     asyncio.run(main())
