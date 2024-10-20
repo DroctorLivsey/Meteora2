@@ -60,7 +60,6 @@ async def main():
             if balance_to_token < 5 and balance_from_token > 2:
                 print('Меняем USDT=', balance_from_token-3)
                 quantity_swap = (balance_from_token-3)
-                quantity_swap = round(quantity_swap, 2)
                 quantity_swap = str(quantity_swap)
                 quantity_swap = quantity_swap.replace('.',',')
                 await swap(page=jup_page, quantity=quantity_swap)
